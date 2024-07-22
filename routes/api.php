@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('customers/{customer}', [CustomerController::class,'show']);
     Route::patch('customers/{id}', [CustomerController::class,'update']);
     Route::delete('customers/{id}', [CustomerController::class,'destroy']);
-    // Route::post('customers/export', [CustomerController::class,'export']);
+    Route::post('customers/export', [CustomerController::class,'export']);
     Route::post('customers', [CustomerController::class,'store']);
     Route::get('customers', [CustomerController::class,'index']);
 

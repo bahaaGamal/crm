@@ -2,8 +2,10 @@
 
 namespace App\Exceptions;
 
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 
 class Handler extends ExceptionHandler
 {
@@ -39,8 +41,23 @@ class Handler extends ExceptionHandler
     /**
      * Register the exception handling callbacks for the application.
      */
-    public function register(): void
+    public function register()
     {
+        $this->renderable(function (AuthorizationException $e) {
+                return response()->json([
+                    "status" => "error",
+                    'errors' => [
+                        'generic' =>'Not authenticated'
+                        ]
+                ], JsonResponse::HTTP_UNAUTHORIZED);
+        });
+        $this->renderable(function (Throwable $e) {
+                return response()->json([
+                    "status" => "error",
+                    'errors' => ['generic' =>'Unknown error']
+                ], JsonResponse::HTTP_BAD_REQUEST);
+        });
+
         $this->reportable(function (Throwable $e) {
             //
         });

@@ -2,26 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use Crm\Customer\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Crm\Customer\Models\Customer;
+use Illuminate\Http\JsonResponse;
 use Crm\Customer\Requests\CreateCustomer;
 use Crm\Customer\Services\CustomerServices;
+use Crm\Customer\Services\Export\ExportFactory;
+use Crm\Customer\Services\CustomerExportService;
 
 class CustomerController extends Controller
 {
     private CustomerServices $customerServices;
+    private CustomerExportService $customerExportService;
 
-    public function __construct(CustomerServices $customerServices)
+    public function __construct(CustomerServices $customerServices,CustomerExportService $customerExportService)
     {
         $this->customerServices = $customerServices;
+        $this->customerExportService = $customerExportService;
     }
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return $this->customerServices->index();
+        $customers =  $this->customerServices->index();
+        return reponseBuilder()
+        ->setData($customers)
+        ->response();
     }
 
     /**
@@ -45,7 +53,16 @@ class CustomerController extends Controller
      */
     public function show($customerId)
     {
-        return $this->customerServices->show($customerId)?? response()->json(['status' => 'data not found'],Response::HTTP_NOT_FOUND);
+        $customer = $this->customerServices->show($customerId);
+        if(!$customer) {
+            return reponseBuilder()
+                ->setStatusCode(JsonResponse::HTTP_NOT_FOUND)
+                ->setErrors(['generic' => 'Customer not found'])
+                ->response();
+        }
+        return reponseBuilder()
+            ->setData($customer)
+            ->response();
     }
 
     /**
@@ -70,5 +87,12 @@ class CustomerController extends Controller
     public function destroy($customer)
     {
         return $this->customerServices->destroy($customer);
+    }
+
+    public function export(Request $request)
+    {
+        $format = $request->get('format','json');
+        $exporter = ExportFactory::instance($format);
+        $this->customerExportService->export($format, $exporter);
     }
 }
